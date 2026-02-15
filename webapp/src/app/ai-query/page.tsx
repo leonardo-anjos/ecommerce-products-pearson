@@ -8,9 +8,9 @@ import { RenderingBadge } from "@/components/RenderingBadge";
  *
  * This page is rendered entirely in the browser. The "use client" directive
  * ensures nothing runs on the server. Users type natural language questions
- * which are sent to the backend NL2SQL endpoint. The backend uses an LLM
- * (Google Gemini) to generate SQL, executes it against SQL Server, and returns
- * the results.
+ * which are sent to the backend NL2SQL endpoint. The backend uses an AI agent
+ * powered by Google Gemini (LLM) to interpret the question, generate a T-SQL
+ * query, execute it against SQL Server, and return the results.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5079";
@@ -115,8 +115,7 @@ export default function AiQueryPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI Query</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Ask questions in natural language — an LLM generates SQL and
-            executes it against the database
+            Ask questions in natural language — powered by Google Gemini AI
           </p>
         </div>
         <RenderingBadge
@@ -142,10 +141,11 @@ export default function AiQueryPage() {
         </svg>
         <span>
           Your question is sent to{" "}
-          <strong>POST /api/ai-query</strong>. The backend uses an{" "}
-          <strong>Google Gemini</strong> to generate a T-SQL query, validates it
-          (read-only SELECT only), executes it against{" "}
-          <strong>SQL Server</strong>, and returns the results.
+          <strong>POST /api/ai-query</strong>. The backend uses an AI agent
+          powered by <strong>Google Gemini</strong> to interpret your question
+          and generate a T-SQL query. The SQL is validated (read-only SELECT
+          only), executed against <strong>SQL Server</strong>, and the results
+          are returned.
         </span>
       </div>
 
@@ -286,6 +286,9 @@ export default function AiQueryPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
+                        Gemini
+                      </span>
                       <span className="text-xs text-gray-400">
                         {entry.result.rowCount} row
                         {entry.result.rowCount !== 1 ? "s" : ""}

@@ -166,7 +166,7 @@ export default function HomePage() {
             </span>
             <span className="text-gray-400">→</span>
             <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-medium">
-              Google Gemini
+              Google Gemini (LLM)
             </span>
             <span className="text-gray-400">→</span>
             <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium">
@@ -225,7 +225,7 @@ export default function HomePage() {
           />
           <FaqItem
             question="How does the NL2SQL feature work?"
-            answer="The user types a natural language question (e.g. 'Show me products under $50'). The backend sends this to Google Gemini with the database schema as context. The LLM generates a T-SQL SELECT query, which is validated for safety (read-only, no mutations), executed against SQL Server, and the results are returned to the frontend."
+            answer="The user types a natural language question (e.g. 'Show me products under $50'). The backend sends it to an AI agent powered by Google Gemini, which receives the full database schema as context and generates a T-SQL SELECT query. The SQL is validated for safety (read-only, no mutations), executed against SQL Server, and the results are returned to the frontend."
           />
           <FaqItem
             question="Is the generated SQL safe?"
