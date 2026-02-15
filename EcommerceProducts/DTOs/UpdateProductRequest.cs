@@ -4,26 +4,24 @@ namespace EcommerceProducts.DTOs;
 
 public class UpdateProductRequest
 {
-    [Required(ErrorMessage = "Name is required.")]
-    [StringLength(200, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 200 characters.")]
-    public string Name { get; set; } = string.Empty;
+    [StringLength(200, MinimumLength = 2, ErrorMessage = "The field 'name' must be between 2 and 200 characters.")]
+    public string? Name { get; set; }
 
-    [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
+    [StringLength(1000, ErrorMessage = "The field 'description' cannot exceed 1000 characters.")]
     public string? Description { get; set; }
 
-    [Required(ErrorMessage = "Price is required.")]
-    [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
-    public decimal Price { get; set; }
+    [Range(0.01, 999999999.99, ErrorMessage = "The field 'price' must be between 0.01 and 999,999,999.99.")]
+    public decimal? Price { get; set; }
 
-    [Required(ErrorMessage = "Stock quantity is required.")]
-    [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative.")]
-    public int StockQuantity { get; set; }
+    [Range(0, int.MaxValue, ErrorMessage = "The field 'stockQuantity' cannot be negative.")]
+    public int? StockQuantity { get; set; }
 
-    [StringLength(100, ErrorMessage = "Category cannot exceed 100 characters.")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "The field 'category' must be between 2 and 100 characters.")]
     public string? Category { get; set; }
 
-    [StringLength(500, ErrorMessage = "Image URL cannot exceed 500 characters.")]
+    [StringLength(500, ErrorMessage = "The field 'imageUrl' cannot exceed 500 characters.")]
+    [Url(ErrorMessage = "The field 'imageUrl' must be a valid URL.")]
     public string? ImageUrl { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public bool? IsActive { get; set; }
 }
