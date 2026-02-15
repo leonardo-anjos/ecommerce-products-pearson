@@ -18,6 +18,7 @@ public class ProductRepository : IProductRepository
         int page,
         int pageSize,
         Expression<Func<Product, bool>>? filter = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default)
     {
         var query = _context.Products.AsNoTracking().AsQueryable();
@@ -29,8 +30,18 @@ public class ProductRepository : IProductRepository
 
         int totalCount = await query.CountAsync(cancellationToken);
 
+        query = orderBy?.ToLowerInvariant() switch
+        {
+            "price" => query.OrderBy(p => p.Price),
+            "pricedesc" => query.OrderByDescending(p => p.Price),
+            "name" => query.OrderBy(p => p.Name),
+            "namedesc" => query.OrderByDescending(p => p.Name),
+            "stock" => query.OrderBy(p => p.StockQuantity),
+            "stockdesc" => query.OrderByDescending(p => p.StockQuantity),
+            _ => query.OrderByDescending(p => p.CreatedAt)
+        };
+
         var items = await query
-            .OrderByDescending(p => p.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

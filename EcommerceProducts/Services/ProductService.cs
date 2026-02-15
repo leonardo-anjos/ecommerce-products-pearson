@@ -25,6 +25,7 @@ public class ProductService : IProductService
             request.Page,
             request.PageSize,
             filter,
+            request.OrderBy,
             cancellationToken);
 
         return new PagedResponse<ProductResponse>
@@ -93,6 +94,31 @@ public class ProductService : IProductService
         if (request.IsActive.HasValue)
         {
             filters.Add(p => p.IsActive == request.IsActive.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Name))
+        {
+            filters.Add(p => p.Name.Contains(request.Name));
+        }
+
+        if (request.MinPrice.HasValue)
+        {
+            filters.Add(p => p.Price >= request.MinPrice.Value);
+        }
+
+        if (request.MaxPrice.HasValue)
+        {
+            filters.Add(p => p.Price <= request.MaxPrice.Value);
+        }
+
+        if (request.MinStock.HasValue)
+        {
+            filters.Add(p => p.StockQuantity >= request.MinStock.Value);
+        }
+
+        if (request.MaxStock.HasValue)
+        {
+            filters.Add(p => p.StockQuantity <= request.MaxStock.Value);
         }
 
         if (filters.Count == 0)

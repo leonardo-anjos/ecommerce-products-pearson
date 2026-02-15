@@ -9,6 +9,7 @@ public interface IProductRepository
         int page,
         int pageSize,
         Expression<Func<Product, bool>>? filter = null,
+        string? orderBy = null,
         CancellationToken cancellationToken = default);
 
     Task<Product?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
