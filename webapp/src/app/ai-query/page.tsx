@@ -7,111 +7,42 @@ import { RenderingBadge } from "@/components/RenderingBadge";
  * AI Query Page — CSR (Client-Side Rendering)
  *
  * This page is rendered entirely in the browser. The "use client" directive
- * ensures nothing runs on the server. The NL2SQL feature translates natural
- * language questions into SQL-like queries and fetches matching products
- * from the backend API.
+ * ensures nothing runs on the server. Users type natural language questions
+ * which are sent to the backend NL2SQL endpoint. The backend uses an LLM
+ * (Google Gemini) to generate SQL, executes it against SQL Server, and returns
+ * the results.
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5079";
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  stockQuantity: number;
-  category: string;
-  imageUrl: string;
-  isActive: boolean;
+interface AiQueryResult {
+  question: string;
+  generatedSql: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+  rowCount: number;
+  executionTimeMs: number;
 }
 
-interface QueryResult {
-  question: string;
-  filter: string;
-  products: Product[];
+interface QueryEntry {
+  result?: AiQueryResult;
+  error?: string;
   timestamp: Date;
 }
 
 const EXAMPLE_QUERIES = [
-  "Show me all products under $50",
+  "Show all products under $50",
   "Which products are out of stock?",
   "List active products in the Electronics category",
-  "Find the most expensive products",
-  "Show me products with more than 100 items in stock",
+  "What are the 5 most expensive products?",
+  "Show the average price per category",
+  "How many products do we have in total?",
 ];
-
-/**
- * Translates a natural-language question into API query parameters.
- *
- * This is a lightweight client-side NL2SQL-style parser. It extracts
- * keywords, prices, stock values, and categories from the user's
- * question and builds the corresponding API query string.
- */
-function nlToFilter(question: string): Record<string, string> {
-  const q = question.toLowerCase();
-  const params: Record<string, string> = {};
-
-  // Price filters
-  const underMatch = q.match(/under\s+\$?(\d+(?:\.\d+)?)/);
-  const overMatch = q.match(/(?:over|above|more than)\s+\$?(\d+(?:\.\d+)?)/);
-  const cheapest = /cheap|lowest price|least expensive/.test(q);
-  const expensive = /expensive|highest price|most expensive|priciest/.test(q);
-
-  if (underMatch) params.maxPrice = underMatch[1];
-  if (overMatch) params.minPrice = overMatch[1];
-  if (cheapest) params.orderBy = "price";
-  if (expensive) params.orderBy = "priceDesc";
-
-  // Stock filters
-  const stockMatch = q.match(
-    /(?:more than|over|above|at least)\s+(\d+)\s+(?:items?\s+)?(?:in\s+)?stock/
-  );
-  const outOfStock = /out of stock|no stock|zero stock/.test(q);
-  const inStock = /in stock/.test(q) && !outOfStock;
-
-  if (stockMatch) params.minStock = stockMatch[1];
-  if (outOfStock) params.maxStock = "0";
-  if (inStock && !stockMatch) params.minStock = "1";
-
-  // Category filter
-  const categoryMatch = q.match(
-    /(?:in|from|category)\s+(?:the\s+)?["']?([a-zA-Z\s]+?)["']?\s*(?:category|$)/i
-  );
-  if (categoryMatch) params.category = categoryMatch[1].trim();
-
-  // Active/inactive
-  if (/\binactive\b|disabled|not active/.test(q)) params.isActive = "false";
-  else if (/\bactive\b|enabled/.test(q)) params.isActive = "true";
-
-  // Name search
-  const nameMatch = q.match(/(?:named?|called)\s+["']?([^"']+)["']?/);
-  if (nameMatch) params.name = nameMatch[1].trim();
-
-  return params;
-}
-
-function buildQueryString(params: Record<string, string>): string {
-  const searchParams = new URLSearchParams();
-  searchParams.set("page", "1");
-  searchParams.set("pageSize", "50");
-
-  if (params.name) searchParams.set("name", params.name);
-  if (params.category) searchParams.set("category", params.category);
-  if (params.minPrice) searchParams.set("minPrice", params.minPrice);
-  if (params.maxPrice) searchParams.set("maxPrice", params.maxPrice);
-  if (params.minStock) searchParams.set("minStock", params.minStock);
-  if (params.maxStock) searchParams.set("maxStock", params.maxStock);
-  if (params.isActive) searchParams.set("isActive", params.isActive);
-  if (params.orderBy) searchParams.set("orderBy", params.orderBy);
-
-  return searchParams.toString();
-}
 
 export default function AiQueryPage() {
   const [question, setQuestion] = useState("");
-  const [results, setResults] = useState<QueryResult[]>([]);
+  const [entries, setEntries] = useState<QueryEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsEndRef = useRef<HTMLDivElement>(null);
 
@@ -121,43 +52,60 @@ export default function AiQueryPage() {
 
   useEffect(() => {
     resultsEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [results]);
+  }, [entries]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!question.trim()) return;
+    const trimmed = question.trim();
+    if (!trimmed) return;
 
     setLoading(true);
-    setError(null);
 
     try {
-      const params = nlToFilter(question);
-      const qs = buildQueryString(params);
-      const filterDescription = Object.entries(params)
-        .map(([k, v]) => `${k}=${v}`)
-        .join(", ");
+      const res = await fetch(`${API_URL}/api/ai-query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: trimmed }),
+      });
 
-      const res = await fetch(`${API_URL}/api/products?${qs}`);
-      if (!res.ok) throw new Error(`API responded with ${res.status}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const message =
+          body?.message || body?.title || `API responded with ${res.status}`;
+        throw new Error(message);
+      }
 
-      const data = await res.json();
-      setResults((prev) => [
+      const data: AiQueryResult = await res.json();
+      setEntries((prev) => [...prev, { result: data, timestamp: new Date() }]);
+      setQuestion("");
+    } catch (err) {
+      setEntries((prev) => [
         ...prev,
         {
-          question,
-          filter: filterDescription || "No specific filters applied — showing all products",
-          products: data.items,
+          error: err instanceof Error ? err.message : "Failed to process query",
           timestamp: new Date(),
         },
       ]);
-      setQuestion("");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to execute query"
-      );
     } finally {
       setLoading(false);
     }
+  }
+
+  function clearHistory() {
+    setEntries([]);
+  }
+
+  function formatValue(value: unknown): string {
+    if (value === null || value === undefined) return "—";
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+    if (typeof value === "number") {
+      if (Number.isInteger(value)) return value.toLocaleString();
+      return value.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    return String(value);
   }
 
   return (
@@ -167,13 +115,38 @@ export default function AiQueryPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">AI Query</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Ask questions about products in natural language
+            Ask questions in natural language — an LLM generates SQL and
+            executes it against the database
           </p>
         </div>
         <RenderingBadge
           type="CSR"
           description="Fully client-side rendered"
         />
+      </div>
+
+      {/* Info banner */}
+      <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-800 flex items-start gap-2">
+        <svg
+          className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span>
+          Your question is sent to{" "}
+          <strong>POST /api/ai-query</strong>. The backend uses an{" "}
+          <strong>Google Gemini</strong> to generate a T-SQL query, validates it
+          (read-only SELECT only), executes it against{" "}
+          <strong>SQL Server</strong>, and returns the results.
+        </span>
       </div>
 
       {/* Query input */}
@@ -184,7 +157,7 @@ export default function AiQueryPage() {
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            placeholder="e.g. Show me all products under $50"
+            placeholder="e.g. What are the 5 most expensive products?"
             className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm
                        focus:outline-none focus:ring-2 focus:ring-green-500/40 focus:border-green-500
                        placeholder:text-gray-400"
@@ -218,7 +191,7 @@ export default function AiQueryPage() {
                     d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                   />
                 </svg>
-                Querying…
+                Processing…
               </>
             ) : (
               <>
@@ -241,8 +214,8 @@ export default function AiQueryPage() {
           </button>
         </div>
 
-        {/* Example queries */}
-        <div className="flex flex-wrap gap-2">
+        {/* Example queries + clear history */}
+        <div className="flex flex-wrap items-center gap-2">
           {EXAMPLE_QUERIES.map((eq) => (
             <button
               key={eq}
@@ -254,92 +227,119 @@ export default function AiQueryPage() {
               {eq}
             </button>
           ))}
+          {entries.length > 0 && (
+            <button
+              type="button"
+              onClick={clearHistory}
+              className="text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-600
+                         hover:bg-red-100 transition-colors ml-auto"
+            >
+              Clear history
+            </button>
+          )}
         </div>
       </form>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Results */}
       <div className="space-y-6">
-        {results.map((result, i) => (
+        {entries.map((entry, i) => (
           <div
             key={i}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
           >
-            {/* Query header */}
-            <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    &quot;{result.question}&quot;
+            {entry.error ? (
+              /* Error entry */
+              <div className="px-4 py-4 flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-medium text-red-800">
+                    Query failed
                   </p>
-                  <p className="text-xs text-gray-500 font-mono">
-                    → {result.filter}
-                  </p>
+                  <p className="text-sm text-red-600 mt-1">{entry.error}</p>
                 </div>
-                <span className="text-xs text-gray-400 whitespace-nowrap">
-                  {result.products.length} result
-                  {result.products.length !== 1 ? "s" : ""}
-                </span>
               </div>
-            </div>
+            ) : entry.result ? (
+              <>
+                {/* Query header */}
+                <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">
+                        &quot;{entry.result.question}&quot;
+                      </p>
+                      <div className="bg-gray-900 rounded-md px-3 py-2 mt-2 overflow-x-auto">
+                        <code className="text-xs text-green-400 whitespace-pre font-mono">
+                          {entry.result.generatedSql}
+                        </code>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <span className="text-xs text-gray-400">
+                        {entry.result.rowCount} row
+                        {entry.result.rowCount !== 1 ? "s" : ""}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {entry.result.executionTimeMs}ms
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Products table */}
-            {result.products.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
-                      <th className="px-4 py-2">Name</th>
-                      <th className="px-4 py-2">Category</th>
-                      <th className="px-4 py-2 text-right">Price</th>
-                      <th className="px-4 py-2 text-right">Stock</th>
-                      <th className="px-4 py-2 text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {result.products.map((p) => (
-                      <tr key={p.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2 font-medium text-gray-900">
-                          {p.name}
-                        </td>
-                        <td className="px-4 py-2 text-gray-600">
-                          {p.category}
-                        </td>
-                        <td className="px-4 py-2 text-right text-gray-900">
-                          ${p.price.toFixed(2)}
-                        </td>
-                        <td className="px-4 py-2 text-right text-gray-600">
-                          {p.stockQuantity}
-                        </td>
-                        <td className="px-4 py-2 text-center">
-                          <span
-                            className={`inline-block w-2 h-2 rounded-full ${
-                              p.isActive ? "bg-green-400" : "bg-gray-300"
-                            }`}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
-                No products matched your query.
-              </div>
-            )}
+                {/* Results table */}
+                {entry.result.rowCount > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-left text-xs text-gray-500 uppercase">
+                          {entry.result.columns.map((col) => (
+                            <th key={col} className="px-4 py-2">
+                              {col}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {entry.result.rows.map((row, rowIdx) => (
+                          <tr key={rowIdx} className="hover:bg-gray-50">
+                            {entry.result!.columns.map((col) => (
+                              <td
+                                key={col}
+                                className="px-4 py-2 text-gray-700 whitespace-nowrap"
+                              >
+                                {formatValue(row[col])}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="px-4 py-8 text-center text-sm text-gray-500">
+                    The query returned no results.
+                  </div>
+                )}
+              </>
+            ) : null}
           </div>
         ))}
         <div ref={resultsEndRef} />
       </div>
 
       {/* Empty state */}
-      {results.length === 0 && !error && (
+      {entries.length === 0 && (
         <div className="text-center py-16 space-y-3">
           <div className="w-16 h-16 mx-auto bg-green-50 rounded-full flex items-center justify-center">
             <svg
@@ -356,9 +356,12 @@ export default function AiQueryPage() {
               />
             </svg>
           </div>
-          <p className="text-gray-600 font-medium">Ask a question to get started</p>
+          <p className="text-gray-600 font-medium">
+            Ask a question to get started
+          </p>
           <p className="text-sm text-gray-400">
-            Try one of the example queries above or type your own
+            Your question will be interpreted by an AI model that generates SQL
+            and executes it against the product database
           </p>
         </div>
       )}
