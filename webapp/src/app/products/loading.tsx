@@ -1,10 +1,16 @@
 /**
- * Loading — displayed automatically by Next.js while the SSR page
+ * Loading — displayed automatically by Next.js while the SSR Products page
  * is fetching data on the server.
  */
-export default function Loading() {
+export default function ProductsLoading() {
   return (
     <div className="space-y-6">
+      {/* Header skeleton */}
+      <div className="flex justify-between items-center">
+        <div className="h-7 w-32 bg-gray-200 rounded animate-pulse" />
+        <div className="h-7 w-48 bg-gray-200 rounded-full animate-pulse" />
+      </div>
+
       {/* Toolbar skeleton */}
       <div className="flex justify-between items-center">
         <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
