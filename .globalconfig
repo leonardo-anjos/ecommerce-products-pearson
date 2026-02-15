@@ -1,0 +1,60 @@
+is_global = true
+
+# ==========================================
+# .NET Analyzers - Global Configuration
+# ==========================================
+
+# Code quality
+dotnet_diagnostic.CA1001.severity = warning    # Types that own disposable fields should be disposable
+dotnet_diagnostic.CA1050.severity = warning    # Declare types in namespaces
+dotnet_diagnostic.CA1051.severity = warning    # Do not declare visible instance fields
+dotnet_diagnostic.CA1304.severity = suggestion # Specify CultureInfo
+dotnet_diagnostic.CA1305.severity = suggestion # Specify IFormatProvider
+dotnet_diagnostic.CA1307.severity = suggestion # Specify StringComparison
+dotnet_diagnostic.CA1310.severity = suggestion # Specify StringComparison for correctness
+dotnet_diagnostic.CA1707.severity = warning    # Identifiers should not contain underscores
+dotnet_diagnostic.CA1708.severity = warning    # Identifiers should differ by more than case
+dotnet_diagnostic.CA1716.severity = suggestion # Identifiers should not match keywords
+dotnet_diagnostic.CA1725.severity = suggestion # Parameter names should match base declaration
+dotnet_diagnostic.CA1805.severity = suggestion # Do not initialize unnecessarily
+dotnet_diagnostic.CA1822.severity = suggestion # Mark members as static
+dotnet_diagnostic.CA1860.severity = suggestion # Avoid using Enumerable.Any() extension
+dotnet_diagnostic.CA1861.severity = warning    # Avoid constant arrays as arguments
+dotnet_diagnostic.CA2016.severity = warning    # Forward CancellationToken to methods
+dotnet_diagnostic.CA2200.severity = warning    # Rethrow to preserve stack details
+dotnet_diagnostic.CA2208.severity = warning    # Instantiate argument exceptions correctly
+dotnet_diagnostic.CA2211.severity = warning    # Non-constant fields should not be visible
+dotnet_diagnostic.CA2225.severity = none       # Operator overloads have named alternates
+dotnet_diagnostic.CA2227.severity = none       # Collection properties should be read only (EF models)
+
+# Code style
+dotnet_diagnostic.IDE0001.severity = suggestion # Simplify name
+dotnet_diagnostic.IDE0002.severity = suggestion # Simplify member access
+dotnet_diagnostic.IDE0003.severity = suggestion # Remove this qualification
+dotnet_diagnostic.IDE0004.severity = suggestion # Remove unnecessary cast
+dotnet_diagnostic.IDE0005.severity = warning    # Remove unnecessary using directives
+dotnet_diagnostic.IDE0010.severity = silent     # Add missing cases to switch
+dotnet_diagnostic.IDE0017.severity = suggestion # Use object initializers
+dotnet_diagnostic.IDE0018.severity = suggestion # Inline variable declaration
+dotnet_diagnostic.IDE0019.severity = suggestion # Use pattern matching (as/null check)
+dotnet_diagnostic.IDE0028.severity = suggestion # Use collection initializers
+dotnet_diagnostic.IDE0032.severity = suggestion # Use auto property
+dotnet_diagnostic.IDE0034.severity = suggestion # Simplify default expression
+dotnet_diagnostic.IDE0036.severity = suggestion # Order modifiers
+dotnet_diagnostic.IDE0039.severity = suggestion # Use local function
+dotnet_diagnostic.IDE0040.severity = suggestion # Add accessibility modifiers
+dotnet_diagnostic.IDE0041.severity = suggestion # Use is null check
+dotnet_diagnostic.IDE0044.severity = suggestion # Make field readonly
+dotnet_diagnostic.IDE0055.severity = warning    # Fix formatting
+dotnet_diagnostic.IDE0060.severity = suggestion # Remove unused parameter
+dotnet_diagnostic.IDE0063.severity = suggestion # Use simple using statement
+dotnet_diagnostic.IDE0065.severity = suggestion # Using directive placement
+dotnet_diagnostic.IDE0066.severity = suggestion # Use switch expression
+dotnet_diagnostic.IDE0071.severity = suggestion # Simplify interpolation
+dotnet_diagnostic.IDE0078.severity = suggestion # Use pattern matching
+dotnet_diagnostic.IDE0083.severity = suggestion # Use pattern matching (not operator)
+dotnet_diagnostic.IDE0090.severity = suggestion # Simplify new expression
+dotnet_diagnostic.IDE0160.severity = suggestion # Use file-scoped namespace
+dotnet_diagnostic.IDE0161.severity = suggestion # Use file-scoped namespace
+dotnet_diagnostic.IDE0270.severity = suggestion # Use coalesce expression
+dotnet_diagnostic.IDE0300.severity = suggestion # Use collection expression
