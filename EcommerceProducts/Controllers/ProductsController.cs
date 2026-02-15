@@ -44,8 +44,8 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Get a product by ID
     /// </summary>
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<ProductResponse>> GetById(int id)
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ProductResponse>> GetById(Guid id)
     {
         var product = await _context.Products.FindAsync(id);
 
@@ -82,8 +82,8 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Update an existing product
     /// </summary>
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<ProductResponse>> Update(int id, [FromBody] UpdateProductRequest request)
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult<ProductResponse>> Update(Guid id, [FromBody] UpdateProductRequest request)
     {
         var product = await _context.Products.FindAsync(id);
 
@@ -107,8 +107,8 @@ public class ProductsController : ControllerBase
     /// <summary>
     /// Delete a product
     /// </summary>
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id)
     {
         var product = await _context.Products.FindAsync(id);
 
