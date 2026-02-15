@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EcommerceProducts.Data;
 using EcommerceProducts.DTOs;
-using EcommerceProducts.Mappings;
+using EcommerceProducts.Services;
 
 namespace EcommerceProducts.Controllers;
 
@@ -10,105 +8,84 @@ namespace EcommerceProducts.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly AppDbContext _context;
+    private readonly IProductService _productService;
 
-    public ProductsController(AppDbContext context)
+    public ProductsController(IProductService productService)
     {
-        _context = context;
+        _productService = productService;
     }
 
     /// <summary>
-    /// Get all products
+    /// Get all products with pagination
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductResponse>>> GetAll(
-        [FromQuery] string? category = null,
-        [FromQuery] bool? isActive = null)
+    public async Task<ActionResult<PagedResponse<ProductResponse>>> GetAll(
+        [FromQuery] PagedRequest request,
+        CancellationToken cancellationToken)
     {
-        var query = _context.Products.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(category))
-        {
-            query = query.Where(p => p.Category == category);
-        }
-
-        if (isActive.HasValue)
-        {
-            query = query.Where(p => p.IsActive == isActive.Value);
-        }
-
-        var products = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .Select(p => p.ToResponse())
-            .ToListAsync();
-
-        return Ok(products);
+        var result = await _productService.GetAllAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>
     /// Get a product by ID
     /// </summary>
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ProductResponse>> GetById(Guid id)
+    public async Task<ActionResult<ProductResponse>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _productService.GetByIdAsync(id, cancellationToken);
 
         if (product is null)
         {
             return NotFound(new { message = $"Product with ID {id} not found." });
         }
 
-        return Ok(product.ToResponse());
+        return Ok(product);
     }
 
     /// <summary>
     /// Create a new product
     /// </summary>
     [HttpPost]
-    public async Task<ActionResult<ProductResponse>> Create([FromBody] CreateProductRequest request)
+    public async Task<ActionResult<ProductResponse>> Create(
+        [FromBody] CreateProductRequest request,
+        CancellationToken cancellationToken)
     {
-        var product = request.ToEntity();
-
-        _context.Products.Add(product);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetById), new { id = product.Id }, product.ToResponse());
+        var product = await _productService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
     }
 
     /// <summary>
     /// Partially update an existing product
     /// </summary>
     [HttpPatch("{id:guid}")]
-    public async Task<ActionResult<ProductResponse>> Update(Guid id, [FromBody] UpdateProductRequest request)
+    public async Task<ActionResult<ProductResponse>> Update(
+        Guid id,
+        [FromBody] UpdateProductRequest request,
+        CancellationToken cancellationToken)
     {
-        var product = await _context.Products.FindAsync(id);
+        var product = await _productService.UpdateAsync(id, request, cancellationToken);
 
         if (product is null)
         {
             return NotFound(new { message = $"Product with ID {id} not found." });
         }
 
-        product.UpdateFrom(request);
-        await _context.SaveChangesAsync();
-
-        return Ok(product.ToResponse());
+        return Ok(product);
     }
 
     /// <summary>
     /// Delete a product
     /// </summary>
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var product = await _context.Products.FindAsync(id);
+        var deleted = await _productService.DeleteAsync(id, cancellationToken);
 
-        if (product is null)
+        if (!deleted)
         {
             return NotFound(new { message = $"Product with ID {id} not found." });
         }
-
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

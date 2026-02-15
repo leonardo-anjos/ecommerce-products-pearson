@@ -1,35 +1,54 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace EcommerceProducts.Filters;
 
-public class ValidationFilter : IActionFilter
+public class ValidationFilter : IAsyncActionFilter
 {
-    public void OnActionExecuting(ActionExecutingContext context)
+    public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        if (context.ModelState.IsValid)
+        foreach (var argument in context.ActionArguments.Values)
         {
+            if (argument is null)
+            {
+                continue;
+            }
+
+            var argumentType = argument.GetType();
+            var validatorType = typeof(IValidator<>).MakeGenericType(argumentType);
+            var validator = context.HttpContext.RequestServices.GetService(validatorType) as IValidator;
+
+            if (validator is null)
+            {
+                continue;
+            }
+
+            var validationContext = new ValidationContext<object>(argument);
+            var validationResult = await validator.ValidateAsync(validationContext);
+
+            if (validationResult.IsValid)
+            {
+                continue;
+            }
+
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray());
+
+            var response = new
+            {
+                title = "One or more validation errors occurred.",
+                status = StatusCodes.Status400BadRequest,
+                errors
+            };
+
+            context.Result = new BadRequestObjectResult(response);
             return;
         }
 
-        var errors = context.ModelState
-            .Where(ms => ms.Value?.Errors.Count > 0)
-            .ToDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
-            );
-
-        var response = new
-        {
-            title = "One or more validation errors occurred.",
-            status = StatusCodes.Status400BadRequest,
-            errors
-        };
-
-        context.Result = new BadRequestObjectResult(response);
-    }
-
-    public void OnActionExecuted(ActionExecutedContext context)
-    {
+        await next();
     }
 }
