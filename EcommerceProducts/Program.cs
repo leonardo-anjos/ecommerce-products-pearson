@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using GenerativeAI;
 using EcommerceProducts.Data;
 using EcommerceProducts.Filters;
 using EcommerceProducts.Repositories;
@@ -34,6 +35,14 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Register Service
 builder.Services.AddScoped<IProductService, ProductService>();
+
+// Register Google Gemini GenerativeModel
+var geminiApiKey = builder.Configuration["Gemini:ApiKey"] ?? string.Empty;
+var geminiModel = builder.Configuration["Gemini:Model"] ?? "gemini-2.5-flash";
+builder.Services.AddSingleton(new GenerativeModel(geminiApiKey, geminiModel));
+
+// Register NL2SQL Service (Gemini AI agent)
+builder.Services.AddScoped<INlToSqlService, NlToSqlService>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
