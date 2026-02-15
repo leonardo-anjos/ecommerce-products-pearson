@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "dBCJ8e843Ic=",
+  "dgSpecHash": "csL3GOmqp6c=",
   "success": true,
-  "projectFilePath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\backend\\EcommerceProducts\\EcommerceProducts.csproj",
+  "projectFilePath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\EcommerceProducts\\EcommerceProducts.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\leonardoanjos\\.nuget\\packages\\azure.core\\1.38.0\\azure.core.1.38.0.nupkg.sha512",
     "C:\\Users\\leonardoanjos\\.nuget\\packages\\azure.identity\\1.11.4\\azure.identity.1.11.4.nupkg.sha512",

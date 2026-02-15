@@ -4480,11 +4480,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\backend\\EcommerceProducts\\EcommerceProducts.csproj",
+      "projectUniqueName": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\EcommerceProducts\\EcommerceProducts.csproj",
       "projectName": "EcommerceProducts",
-      "projectPath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\backend\\EcommerceProducts\\EcommerceProducts.csproj",
+      "projectPath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\EcommerceProducts\\EcommerceProducts.csproj",
       "packagesPath": "C:\\Users\\leonardoanjos\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\backend\\EcommerceProducts\\obj\\",
+      "outputPath": "C:\\Users\\leonardoanjos\\labs\\ecommerce-products-pearson\\EcommerceProducts\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
