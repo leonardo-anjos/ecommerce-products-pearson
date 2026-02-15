@@ -13,16 +13,16 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 flex flex-col">
       {/* Image */}
-      <div className="relative h-48 w-full bg-gray-100">
+      <div className="relative h-36 w-full bg-gray-100">
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
             className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
             unoptimized
           />
         ) : (
@@ -56,43 +56,43 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3 flex flex-col flex-1">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
+          <h3 className="text-sm font-semibold text-gray-900 truncate">
             {product.name}
           </h3>
 
           {product.category && (
-            <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-blue-50 text-blue-700 rounded-full font-medium">
+            <span className="inline-block mt-1 px-1.5 py-0.5 text-[11px] bg-blue-50 text-blue-700 rounded-full font-medium">
               {product.category}
             </span>
           )}
 
           {product.description && (
-            <p className="mt-2 text-sm text-gray-600 line-clamp-2">
+            <p className="mt-1 text-xs text-gray-600 line-clamp-2">
               {product.description}
             </p>
           )}
         </div>
 
         {/* Price & Stock */}
-        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-          <span className="text-xl font-bold text-gray-900">
+        <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
+          <span className="text-base font-bold text-gray-900">
             ${product.price.toFixed(2)}
           </span>
-          <span className="text-sm text-gray-500">
+          <span className="text-xs text-gray-500">
             Stock: {product.stockQuantity}
           </span>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-1.5 mt-2">
           <button
             onClick={() => onEdit(product)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
           >
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -108,10 +108,10 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
           </button>
           <button
             onClick={() => onDelete(product)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
+            className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 text-xs font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors cursor-pointer"
           >
             <svg
-              className="w-4 h-4"
+              className="w-3.5 h-3.5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

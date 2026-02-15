@@ -15,12 +15,12 @@ export default async function HomePage() {
   let initialData;
 
   try {
-    initialData = await getProducts(1, 12);
+    initialData = await getProducts(1, 10);
   } catch {
     initialData = {
       items: [],
       page: 1,
-      pageSize: 12,
+      pageSize: 10,
       totalCount: 0,
       totalPages: 0,
       hasPreviousPage: false,
