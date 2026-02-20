@@ -5,8 +5,14 @@ using EcommerceProducts.Data;
 using EcommerceProducts.Filters;
 using EcommerceProducts.Repositories;
 using EcommerceProducts.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configurar Serilog
+builder.Host.UseSerilog((ctx, lc) => lc
+    .WriteTo.Console()
+    .ReadFrom.Configuration(ctx.Configuration));
 
 // Add services to the container.
 builder.Services.AddControllers(options =>
@@ -21,7 +27,15 @@ builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options 
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "Ecommerce Products API",
+        Version = "v1",
+        Description = "API para gerenciamento de produtos e queries de IA."
+    });
+});
 
 // Configure Entity Framework Core with SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -61,9 +75,14 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ecommerce Products API v1");
+        c.RoutePrefix = string.Empty;
+    });
 }
 
+app.UseMiddleware<EcommerceProducts.Filters.GlobalExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseAuthorization();
