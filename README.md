@@ -29,10 +29,16 @@ REST API for product management built with **C# 12**, **.NET 8**, **ASP.NET Core
 
 ### 1. Start the Database
 
-From the project root directory:
+From the project root or backend directory:
 
 ```bash
 docker compose up -d
+```
+
+Or from the root, reference the file in backend:
+
+```bash
+docker compose -f backend/docker-compose.yml up -d
 ```
 
 This starts a **SQL Server 2022 Developer Edition** container with the following configuration:
@@ -48,7 +54,7 @@ This starts a **SQL Server 2022 Developer Edition** container with the following
 ### 2. Apply Migrations
 
 ```bash
-cd EcommerceProducts
+cd backend
 dotnet ef database update
 ```
 
@@ -67,23 +73,64 @@ Swagger UI: **http://localhost:5079/swagger**
 ## Project Structure
 
 ```
-EcommerceProducts/
-├── Controllers/
-│   └── ProductsController.cs       # API endpoints (CRUD)
-├── Data/
-│   └── AppDbContext.cs              # EF Core DbContext
-├── DTOs/
-│   ├── CreateProductRequest.cs      # Create request DTO
-│   ├── UpdateProductRequest.cs      # Update request DTO
-│   └── ProductResponse.cs           # Response DTO
-├── Migrations/                      # EF Core migrations
-├── Models/
-│   └── Product.cs                   # Product entity
-├── Properties/
-│   └── launchSettings.json          # Launch configuration
-├── appsettings.json                 # App settings & connection string
-├── EcommerceProducts.csproj         # Project file
-└── Program.cs                       # Application entry point
+.
+├── backend/                                    # Backend API
+│   ├── EcommerceProducts/
+│   │   ├── Controllers/
+│   │   │   ├── AiQueryController.cs            # AI query endpoints
+│   │   │   └── ProductsController.cs           # API endpoints (CRUD)
+│   │   ├── Data/
+│   │   │   └── AppDbContext.cs                 # EF Core DbContext
+│   │   ├── DTOs/
+│   │   │   ├── AiQueryRequest.cs               # AI query request DTO
+│   │   │   ├── AiQueryResponse.cs              # AI query response DTO
+│   │   │   ├── CreateProductRequest.cs         # Create request DTO
+│   │   │   ├── PagedRequest.cs                 # Pagination request DTO
+│   │   │   ├── PagedResponse.cs                # Pagination response DTO
+│   │   │   ├── ProductResponse.cs              # Response DTO
+│   │   │   └── UpdateProductRequest.cs         # Update request DTO
+│   │   ├── Models/
+│   │   │   └── Product.cs                      # Product entity
+│   │   ├── Services/
+│   │   │   ├── IProductService.cs              # Product service interface
+│   │   │   ├── ProductService.cs               # Product service implementation
+│   │   │   ├── INlToSqlService.cs              # NL-to-SQL service interface
+│   │   │   └── NlToSqlService.cs               # NL-to-SQL service implementation
+│   │   ├── Repositories/
+│   │   │   ├── IProductRepository.cs           # Product repository interface
+│   │   │   └── ProductRepository.cs            # Product repository implementation
+│   │   ├── Validators/
+│   │   │   ├── AiQueryRequestValidator.cs      # AI query validator
+│   │   │   ├── CreateProductRequestValidator.cs # Create product validator
+│   │   │   └── UpdateProductRequestValidator.cs # Update product validator
+│   │   ├── Migrations/                         # EF Core migrations
+│   │   ├── Filters/
+│   │   │   ├── GlobalExceptionMiddleware.cs    # Exception handling middleware
+│   │   │   └── ValidationFilter.cs             # Validation filter
+│   │   ├── Mappings/
+│   │   │   └── ProductMappings.cs              # AutoMapper mappings
+│   │   ├── Properties/
+│   │   │   └── launchSettings.json             # Launch configuration
+│   │   ├── appsettings.json                    # App settings
+│   │   ├── appsettings.Development.json        # Development settings
+│   │   ├── EcommerceProducts.csproj            # Project file
+│   │   └── Program.cs                          # Application entry point
+│   ├── EcommerceProducts.Tests/
+│   │   └── SampleTest.cs                       # Unit tests
+│   ├── docker-compose.yml                      # Docker services configuration
+│   └── ecommerce-products-pearson.sln          # Visual Studio solution
+├── webapp/                                     # Frontend (Next.js)
+│   ├── src/
+│   │   ├── app/                                # Next.js app directory
+│   │   ├── components/                         # React components
+│   │   ├── services/                           # API services
+│   │   └── types/                              # TypeScript types
+│   ├── package.json
+│   └── tsconfig.json
+├── README.md                                   # This file
+├── .editorconfig                               # Editor configuration
+├── .gitignore                                  # Git ignore rules
+└── .globalconfig                               # Global analyzer configuration
 ```
 
 ---
@@ -240,8 +287,10 @@ DELETE /api/products/{id}
 
 ## Useful Commands
 
+All commands should be run from the `backend` directory:
+
 ```bash
-# Start database
+# Start database (can be run from root or backend)
 docker compose up -d
 
 # Stop database
@@ -270,7 +319,7 @@ dotnet build
 
 ## Connection String
 
-Configured in `appsettings.json`:
+Configured in `backend/EcommerceProducts/appsettings.json`:
 
 ```
 Server=localhost,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
