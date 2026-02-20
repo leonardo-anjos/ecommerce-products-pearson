@@ -39,7 +39,8 @@ builder.Services.AddSwaggerGen(options =>
 
 // Configure Entity Framework Core with SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        x => x.EnableRetryOnFailure(maxRetryCount: 5)));
 
 // Register FluentValidation validators
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -70,6 +71,35 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Apply database migrations automatically with retries
+int retryCount = 0;
+const int maxRetries = 10;
+while (retryCount < maxRetries)
+{
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            Log.Information("Applying database migrations...");
+            dbContext.Database.Migrate();
+            Log.Information("Database migrations applied successfully");
+        }
+        break; // Success - exit retry loop
+    }
+    catch (Exception ex)
+    {
+        retryCount++;
+        if (retryCount >= maxRetries)
+        {
+            Log.Fatal(ex, "Failed to apply database migrations after {MaxRetries} attempts", maxRetries);
+            throw;
+        }
+        Log.Warning(ex, "Failed to apply database migrations (Attempt {Attempt}/{MaxRetries}). Retrying in 3 seconds...", retryCount, maxRetries);
+        System.Threading.Thread.Sleep(3000);
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

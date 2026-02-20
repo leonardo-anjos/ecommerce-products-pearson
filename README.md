@@ -1,72 +1,69 @@
 # EcommerceProducts API
 
-REST API for product management built with **C# 12**, **.NET 8**, **ASP.NET Core**, **Entity Framework Core** and **Microsoft SQL Server**.
+Full-stack e-commerce products management application with **AI-powered search**. Built with **.NET 8** backend, **Next.js** frontend, and **SQL Server** database.
 
 ---
 
 ## Tech Stack
 
-| Technology | Version |
-|---|---|
-| .NET | 8.0 |
-| C# | 12 |
-| ASP.NET Core | 8.0 |
-| Entity Framework Core | 8.0.x |
-| SQL Server | 2022 (Docker) |
-| Swagger / OpenAPI | Swashbuckle 6.6.2 |
+| Layer | Technology | Version |
+|---|---|---|
+| **Backend** | .NET / ASP.NET Core | 8.0 |
+| **Language** | C# | 12 |
+| **Database** | SQL Server | 2022 |
+| **ORM** | Entity Framework Core | 8.0.x |
+| **Frontend** | Next.js / React | Latest |
+| **Language** | TypeScript | Latest |
+| **Styling** | Tailwind CSS | Latest |
+| **API Docs** | Swagger / OpenAPI | Swashbuckle 6.6.2 |
+| **AI Integration** | Google Gemini API | 2.5-flash |
 
 ---
 
 ## Prerequisites
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Docker](https://www.docker.com/get-started)
-- [dotnet-ef CLI tool](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) (`dotnet tool install --global dotnet-ef`)
+- [Docker](https://www.docker.com/get-started) & Docker Compose
+- (Optional) [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) for local development
+- (Optional) [Node.js 20+](https://nodejs.org/) for local frontend development
 
 ---
 
-## Getting Started
+## Quick Start
 
-### 1. Start the Database
+### Run Everything with Docker (Recommended)
 
-From the project root or backend directory:
-
-```bash
-docker compose up -d
-```
-
-Or from the root, reference the file in backend:
+From the project root:
 
 ```bash
-docker compose -f backend/docker-compose.yml up -d
+# Start all services (Database, Backend API, Frontend)
+docker compose up
+
+# In another terminal, apply database migrations
+docker compose exec backend dotnet ef database update
 ```
 
-This starts a **SQL Server 2022 Developer Edition** container with the following configuration:
+**Access the application:**
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- Backend API: [http://localhost:5079](http://localhost:5079)
+- API Documentation: [http://localhost:5079/swagger](http://localhost:5079/swagger)
 
-| Setting | Value |
-|---|---|
-| Container Name | `ecommerce-sqlserver` |
-| Port | `1433` |
-| User | `sa` |
-| Password | `SqlServer@2024!` |
-| Volume | `sqlserver-data` (persistent) |
-
-### 2. Apply Migrations
+### Stop All Services
 
 ```bash
-cd backend
-dotnet ef database update
+docker compose down
+
+# Remove data volumes
+docker compose down -v
 ```
 
-### 3. Run the Application
+---
 
-```bash
-dotnet run
-```
+## Documentation
 
-The API will be available at: **http://localhost:5079**
-
-Swagger UI: **http://localhost:5079/swagger**
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick reference guide for getting started
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and architecture overview
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment and CI/CD setup
+- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
 
 ---
 
@@ -74,64 +71,69 @@ Swagger UI: **http://localhost:5079/swagger**
 
 ```
 .
-├── backend/                                    # Backend API
+├── backend/                                    # Backend API (.NET)
+│   ├── Dockerfile                              # Docker build configuration
+│   ├── docker-compose.yml                      # Old DB-only compose
+│   ├── ecommerce-products-pearson.sln          # Visual Studio solution
 │   ├── EcommerceProducts/
 │   │   ├── Controllers/
 │   │   │   ├── AiQueryController.cs            # AI query endpoints
-│   │   │   └── ProductsController.cs           # API endpoints (CRUD)
+│   │   │   └── ProductsController.cs           # CRUD endpoints
 │   │   ├── Data/
 │   │   │   └── AppDbContext.cs                 # EF Core DbContext
-│   │   ├── DTOs/
-│   │   │   ├── AiQueryRequest.cs               # AI query request DTO
-│   │   │   ├── AiQueryResponse.cs              # AI query response DTO
-│   │   │   ├── CreateProductRequest.cs         # Create request DTO
-│   │   │   ├── PagedRequest.cs                 # Pagination request DTO
-│   │   │   ├── PagedResponse.cs                # Pagination response DTO
-│   │   │   ├── ProductResponse.cs              # Response DTO
-│   │   │   └── UpdateProductRequest.cs         # Update request DTO
+│   │   ├── DTOs/                               # Data transfer objects
 │   │   ├── Models/
 │   │   │   └── Product.cs                      # Product entity
-│   │   ├── Services/
-│   │   │   ├── IProductService.cs              # Product service interface
-│   │   │   ├── ProductService.cs               # Product service implementation
-│   │   │   ├── INlToSqlService.cs              # NL-to-SQL service interface
-│   │   │   └── NlToSqlService.cs               # NL-to-SQL service implementation
-│   │   ├── Repositories/
-│   │   │   ├── IProductRepository.cs           # Product repository interface
-│   │   │   └── ProductRepository.cs            # Product repository implementation
-│   │   ├── Validators/
-│   │   │   ├── AiQueryRequestValidator.cs      # AI query validator
-│   │   │   ├── CreateProductRequestValidator.cs # Create product validator
-│   │   │   └── UpdateProductRequestValidator.cs # Update product validator
+│   │   ├── Services/                           # Business logic
+│   │   ├── Repositories/                       # Data access layer
+│   │   ├── Validators/                         # FluentValidation
+│   │   ├── Filters/                            # Middleware & filters
 │   │   ├── Migrations/                         # EF Core migrations
-│   │   ├── Filters/
-│   │   │   ├── GlobalExceptionMiddleware.cs    # Exception handling middleware
-│   │   │   └── ValidationFilter.cs             # Validation filter
-│   │   ├── Mappings/
-│   │   │   └── ProductMappings.cs              # AutoMapper mappings
-│   │   ├── Properties/
-│   │   │   └── launchSettings.json             # Launch configuration
-│   │   ├── appsettings.json                    # App settings
-│   │   ├── appsettings.Development.json        # Development settings
-│   │   ├── EcommerceProducts.csproj            # Project file
+│   │   ├── appsettings.json                    # Configuration
 │   │   └── Program.cs                          # Application entry point
-│   ├── EcommerceProducts.Tests/
-│   │   └── SampleTest.cs                       # Unit tests
-│   ├── docker-compose.yml                      # Docker services configuration
-│   └── ecommerce-products-pearson.sln          # Visual Studio solution
+│   └── EcommerceProducts.Tests/                # Unit tests
+│
 ├── webapp/                                     # Frontend (Next.js)
+│   ├── Dockerfile                              # Docker build configuration
 │   ├── src/
 │   │   ├── app/                                # Next.js app directory
 │   │   ├── components/                         # React components
-│   │   ├── services/                           # API services
+│   │   ├── services/                           # API client services
 │   │   └── types/                              # TypeScript types
 │   ├── package.json
 │   └── tsconfig.json
+│
+├── docker-compose.yml                          # Main orchestration file
 ├── README.md                                   # This file
 ├── .editorconfig                               # Editor configuration
 ├── .gitignore                                  # Git ignore rules
 └── .globalconfig                               # Global analyzer configuration
 ```
+
+---
+
+## Local Development (Without Docker)
+
+### Backend Setup
+
+```bash
+cd backend
+dotnet restore
+dotnet ef database update
+dotnet run
+```
+
+API: http://localhost:5079
+
+### Frontend Setup
+
+```bash
+cd webapp
+npm install
+npm run dev
+```
+
+Frontend: http://localhost:3000
 
 ---
 
@@ -149,6 +151,8 @@ GET /api/products
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
+| `page` | int | No | Page number (default: 1) |
+| `pageSize` | int | No | Items per page (default: 12) |
 | `category` | string | No | Filter by category |
 | `isActive` | bool | No | Filter by active status |
 
@@ -285,19 +289,98 @@ DELETE /api/products/{id}
 
 ---
 
-## Useful Commands
+## Environment Configuration
 
-All commands should be run from the `backend` directory:
+The project automatically creates `.env` files from `.env.example` templates when you run it for the first time.
+
+### Automatic Setup
+
+**All startup methods handle this automatically:**
 
 ```bash
-# Start database (can be run from root or backend)
+# Windows
+project.bat start-bg
+
+# Linux/Mac
+./project.sh start-bg
+
+# Docker
+docker compose up
+```
+
+### Environment Files
+
+| File | Purpose | Auto-created |
+|------|---------|--------------|
+| `backend/.env` | Backend configuration | ✓ Yes |
+| `webapp/.env` | Frontend configuration | ✓ Yes |
+
+### Default Values
+
+**Backend** (`backend/.env`):
+```
+ASPNETCORE_ENVIRONMENT=Production
+ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=EcommerceProductsDb;...
+Gemini__ApiKey=YOUR_GEMINI_API_KEY_HERE
+Gemini__Model=gemini-2.5-flash
+```
+
+**Frontend** (`webapp/.env`):
+```
+NEXT_PUBLIC_API_URL=http://localhost:5079
+```
+
+### Customization
+
+1. Let the project create `.env` files automatically
+2. Edit the `.env` files (not `.env.example`)
+3. Restart services: `docker compose restart`
+
+> 💡 **Never commit `.env` files to Git** - they contain sensitive data
+
+---
+
+### Docker Commands
+
+```bash
+# Start all services
+docker compose up
+
+# Start services in background
 docker compose up -d
 
-# Stop database
+# Stop all services
 docker compose down
 
-# Stop database and remove data
+# Stop services and remove data volumes
 docker compose down -v
+
+# View logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f backend
+
+# Execute command in backend container
+docker compose exec backend dotnet ef database update
+
+# Rebuild images
+docker compose build --no-cache
+```
+
+### Backend Commands (Local Development)
+
+From the `backend` directory:
+
+```bash
+# Restore dependencies
+dotnet restore
+
+# Build project
+dotnet build
+
+# Run application
+dotnet run
 
 # Create a new migration
 dotnet ef migrations add <MigrationName>
@@ -307,20 +390,111 @@ dotnet ef database update
 
 # Remove last migration
 dotnet ef migrations remove
+```
 
-# Run the application
-dotnet run
+### Frontend Commands (Local Development)
 
-# Build the project
-dotnet build
+From the `webapp` directory:
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
 ---
 
-## Connection String
+## Environment Configuration
 
-Configured in `backend/EcommerceProducts/appsettings.json`:
+### Backend (.NET)
 
+The backend uses environment variables for configuration. In Docker, these are set in `docker-compose.yml`:
+
+- `ConnectionStrings__DefaultConnection` - SQL Server connection string
+- `Gemini__ApiKey` - Google Gemini API key
+- `Gemini__Model` - Gemini model name (default: gemini-2.5-flash)
+
+### Frontend (Next.js)
+
+The frontend uses environment variables prefixed with `NEXT_PUBLIC_` (visible to browser):
+
+- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:5079)
+
+---
+
+## Database
+
+**SQL Server 2022 Developer Edition**
+
+| Setting | Value |
+|---|---|
+| Server | `localhost,1433` (local) or `sqlserver,1433` (Docker) |
+| Database | `EcommerceProductsDb` |
+| Username | `sa` |
+| Password | `SqlServer@2024!` |
+
+### Connection Strings
+
+**Docker (from docker-compose.yml):**
+```
+Server=sqlserver,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
+```
+
+**Local Development:**
 ```
 Server=localhost,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
 ```
+
+---
+
+## Troubleshooting
+
+### Port Already in Use
+
+If a port is already bound:
+
+```bash
+# Free up port 3000 (frontend)
+lsof -ti:3000 | xargs kill -9
+
+# Free up port 5079 (backend)
+lsof -ti:5079 | xargs kill -9
+
+# Free up port 1433 (database)
+lsof -ti:1433 | xargs kill -9
+```
+
+### Database Connection Issues
+
+```bash
+# Check if SQL Server container is healthy
+docker compose ps
+
+# Reset database
+docker compose down -v
+docker compose up -d
+docker compose exec backend dotnet ef database update
+```
+
+### Building Issues
+
+```bash
+# Clear Docker cache and rebuild
+docker compose down
+docker compose build --no-cache
+docker compose up
+```
+
+---
+
+## License
+
+This project is licensed under the MIT License.

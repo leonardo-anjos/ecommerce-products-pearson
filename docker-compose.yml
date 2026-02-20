@@ -1,0 +1,95 @@
+services:
+  # Initialize environment files
+  init:
+    image: alpine:latest
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: |
+      sh -c '
+      if [ ! -f backend/.env ] && [ -f backend/.env.example ]; then
+        cp backend/.env.example backend/.env
+        echo "✓ Created backend/.env from .env.example"
+      fi
+      if [ ! -f webapp/.env ] && [ -f webapp/.env.example ]; then
+        cp webapp/.env.example webapp/.env
+        echo "✓ Created webapp/.env from .env.example"
+      fi
+      echo "✓ Environment files ready"
+      '
+    networks:
+      - ecommerce-network
+
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ecommerce-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SqlServer@2024!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/1433"]
+      interval: 10s
+      timeout: 3s
+      retries: 30
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Backend API (.NET)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ecommerce-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
+      - Gemini__ApiKey=AIzaSyCRkWANxsrUeE8c7l3kTpbKnZVhJXhXMoU
+      - Gemini__Model=gemini-2.5-flash
+    ports:
+      - "5079:5079"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://backend:5079
+    container_name: ecommerce-webapp
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:5079
+    ports:
+      - "3000:3000"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver-data:
+    driver: local
+
+networks:
+  ecommerce-network:
+    driver: bridge
+
