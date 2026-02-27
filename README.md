@@ -1,500 +1,632 @@
-# EcommerceProducts API
+# EcommerceProducts
 
-Full-stack e-commerce products management application with **AI-powered search**. Built with **.NET 8** backend, **Next.js** frontend, and **SQL Server** database.
-
----
-
-## Tech Stack
-
-| Layer | Technology | Version |
-|---|---|---|
-| **Backend** | .NET / ASP.NET Core | 8.0 |
-| **Language** | C# | 12 |
-| **Database** | SQL Server | 2022 |
-| **ORM** | Entity Framework Core | 8.0.x |
-| **Frontend** | Next.js / React | Latest |
-| **Language** | TypeScript | Latest |
-| **Styling** | Tailwind CSS | Latest |
-| **API Docs** | Swagger / OpenAPI | Swashbuckle 6.6.2 |
-| **AI Integration** | Google Gemini API | 2.5-flash |
+Documentação única e resumida sobre a arquitetura, padrões de projeto e integrações da plataforma de gerenciamento de produtos com IA.
 
 ---
 
-## Prerequisites
+## 🎯 Visão Geral
 
-- [Docker](https://www.docker.com/get-started) & Docker Compose
-- (Optional) [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) for local development
-- (Optional) [Node.js 20+](https://nodejs.org/) for local frontend development
+O **EcommerceProducts** é uma aplicação full-stack de gerenciamento de produtos de e-commerce com recursos avançados de busca inteligente baseada em IA. A plataforma utiliza uma arquitetura em camadas bem definida, com separação clara de responsabilidades entre frontend, backend e persistência de dados.
 
----
+### Principais Características
 
-## Quick Start
-
-### Run Everything with Docker (Recommended)
-
-From the project root:
-
-```bash
-# Start all services (Database, Backend API, Frontend)
-docker compose up
-
-# In another terminal, apply database migrations
-docker compose exec backend dotnet ef database update
-```
-
-**Access the application:**
-- Frontend: [http://localhost:3000](http://localhost:3000)
-- Backend API: [http://localhost:5079](http://localhost:5079)
-- API Documentation: [http://localhost:5079/swagger](http://localhost:5079/swagger)
-
-### Stop All Services
-
-```bash
-docker compose down
-
-# Remove data volumes
-docker compose down -v
-```
+- ✅ Gerenciamento completo de produtos (CRUD)
+- ✅ Busca inteligente com linguagem natural integrada ao Google Gemini
+- ✅ Persistência de dados em SQL Server
+- ✅ Interface moderna e responsiva com Next.js
+- ✅ Validação robusta e tratamento centralizado de erros
+- ✅ Containerização completa com Docker Compose
+- ✅ Documentação interativa com Swagger
 
 ---
 
-## Documentation
+## 🏗️ Arquitetura do Sistema
 
-- **[QUICKSTART.md](QUICKSTART.md)** - Quick reference guide for getting started
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and architecture overview
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment and CI/CD setup
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and solutions
+### Diagrama de Alto Nível
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│                  Docker Compose Network                        │
+│                   (ecommerce-network)                          │
+├───────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────┐ │
+│  │   Frontend       │    │      Backend     │    │ Database │ │
+│  │   (Next.js)      │    │   (ASP.NET 8)    │    │  (MSSQL) │ │
+│  │                  │    │                  │    │          │ │
+│  │   Port: 3000     │    │   Port: 5079     │    │ Port:1433│ │
+│  └────────┬─────────┘    └────────┬─────────┘    └────────────┘ │
+│           │                       │                │            │
+│           └───────── HTTP ────────┤                │            │
+│                                   │                │            │
+│                                   └─── Connection ─┘            │
+│                                      String (MSSQL)            │
+│                                                                 │
+└───────────────────────────────────────────────────────────────┘
+```
+
+### Componentes Principais
+
+| Componente | Tecnologia | Porta | Função |
+|-----------|-----------|--------|--------|
+| **Frontend (webapp)** | Next.js 14 + React 18 | 3000 | Interface de usuário |
+| **Backend (API)** | ASP.NET Core 8 | 5079 | Lógica de negócio e endpoints |
+| **Database** | SQL Server 2022 | 1433 | Persistência de dados |
+| **AI Service** | Google Gemini 2.5-flash | - | Processamento de queries em linguagem natural |
 
 ---
 
-## Project Structure
+## 💻 Stack Tecnológico
+
+### Backend
+
+| Categoria | Tecnologia | Versão | Função |
+|----------|-----------|--------|--------|
+| Framework | ASP.NET Core | 8.0 | Framework web |
+| Linguagem | C# | 12 | Linguagem de programação |
+| ORM | Entity Framework Core | 8.0.x | Mapeamento objeto-relacional |
+| BD | SQL Server | 2022 | Banco de dados relacional |
+| API Docs | Swashbuckle | 6.6.2 | Documentação OpenAPI/Swagger |
+| Validação | FluentValidation | 11.3.x | Validação de dados |
+| Logging | Serilog | 3.1.x | Sistema de logs |
+| AI/ML | Google GenerativeAI | Latest | Integração com Gemini API |
+
+### Frontend
+
+| Categoria | Tecnologia | Versão | Função |
+|----------|-----------|--------|--------|
+| Framework | Next.js | 14.2.21 | React framework |
+| Linguagem | TypeScript | 5.4.5 | Tipagem estática |
+| View | React | 18.3.1 | Biblioteca de UI |
+| Styling | Tailwind CSS | 3.4.4 | Utility-first CSS |
+| Ferramenta | npm | Latest | Package manager |
+
+### DevOps
+
+| Componente | Tecnologia | Função |
+|-----------|-----------|--------|
+| Containerização | Docker | Isolamento de serviços |
+| Orquestração | Docker Compose | Gerenciamento de múltiplos containers |
+
+---
+
+## 🎨 Padrões de Projeto
+
+### 1. Padrão Repository
+
+**Propósito:** Abstrair a camada de acesso a dados e fornecer uma interface consistente para operações de BD.
+
+**Implementação:**
 
 ```
-.
-├── backend/                                    # Backend API (.NET)
-│   ├── Dockerfile                              # Docker build configuration
-│   ├── docker-compose.yml                      # Old DB-only compose
-│   ├── ecommerce-products-pearson.sln          # Visual Studio solution
-│   ├── EcommerceProducts/
-│   │   ├── Controllers/
-│   │   │   ├── AiQueryController.cs            # AI query endpoints
-│   │   │   └── ProductsController.cs           # CRUD endpoints
-│   │   ├── Data/
-│   │   │   └── AppDbContext.cs                 # EF Core DbContext
-│   │   ├── DTOs/                               # Data transfer objects
-│   │   ├── Models/
-│   │   │   └── Product.cs                      # Product entity
-│   │   ├── Services/                           # Business logic
-│   │   ├── Repositories/                       # Data access layer
-│   │   ├── Validators/                         # FluentValidation
-│   │   ├── Filters/                            # Middleware & filters
-│   │   ├── Migrations/                         # EF Core migrations
-│   │   ├── appsettings.json                    # Configuration
-│   │   └── Program.cs                          # Application entry point
-│   └── EcommerceProducts.Tests/                # Unit tests
-│
-├── webapp/                                     # Frontend (Next.js)
-│   ├── Dockerfile                              # Docker build configuration
-│   ├── src/
-│   │   ├── app/                                # Next.js app directory
-│   │   ├── components/                         # React components
-│   │   ├── services/                           # API client services
-│   │   └── types/                              # TypeScript types
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── docker-compose.yml                          # Main orchestration file
-├── README.md                                   # This file
-├── .editorconfig                               # Editor configuration
-├── .gitignore                                  # Git ignore rules
-└── .globalconfig                               # Global analyzer configuration
+IProductRepository (interface)
+    ↓
+ProductRepository (implementação)
+    ├── GetAllAsync() - Retorna páginas de produtos com filtros
+    ├── GetByIdAsync() - Busca um produto por ID
+    ├── AddAsync() - Cria novo produto
+    ├── UpdateAsync() - Atualiza produto existente
+    └── DeleteAsync() - Remove produto
+```
+
+**Local:** `backend/EcommerceProducts/Repositories/`
+
+### 2. Padrão Service (Business Logic)
+
+**Propósito:** Encapsular regras de negócio e coordenar múltiplas operações de repositório.
+
+**Implementação:**
+
+```
+IProductService (interface)
+    ↓
+ProductService (implementação)
+    ├── GetAllAsync() - Lista produtos com paginação
+    ├── GetByIdAsync() - Obtém detalhes de um produto
+    ├── CreateAsync() - Cria novo produto com validação
+    ├── UpdateAsync() - Atualiza produto com validação
+    └── DeleteAsync() - Deleta produto
+```
+
+**Local:** `backend/EcommerceProducts/Services/`
+
+### 3. Padrão Data Transfer Object (DTO)
+
+**Propósito:** Separar a representação de dados interna (Models) das expostas pela API.
+
+**DTOs Utilizados:**
+
+- `AiQueryRequest` - Requisição de query em linguagem natural
+- `AiQueryResponse` - Resposta da query processada pela IA
+- `CreateProductRequest` - Dados para criar produto
+- `UpdateProductRequest` - Dados para atualizar produto
+- `ProductResponse` - Modelo de resposta de produto
+- `PagedRequest` - Parâmetros de paginação
+- `PagedResponse<T>` - Resposta paginada genérica
+
+**Local:** `backend/EcommerceProducts/DTOs/`
+
+### 4. Padrão Middleware
+
+**Propósito:** Centralizar processamento transversal como validação e tratamento de erros.
+
+**Implementações:**
+
+- **GlobalExceptionMiddleware** - Captura exceções não tratadas e retorna respostas padronizadas
+- **ValidationFilter** - Processa validações de FluentValidation
+
+**Local:** `backend/EcommerceProducts/Filters/`
+
+### 5. Padrão Dependency Injection (DI)
+
+**Propósito:** Gerenciar dependências através do contêiner IoC do ASP.NET Core.
+
+**Registro de Serviços (Program.cs):**
+
+```csharp
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<INlToSqlService, NlToSqlService>();
+builder.Services.AddSingleton(new GenerativeModel(apiKey, model));
+```
+
+### 6. Padrão MVC
+
+**Propósito:** Separar responsabilidades em Model, View e Controller.
+
+**Controllers:**
+
+- `ProductsController` - Endpoints de CRUD (GET, POST, PUT, DELETE)
+- `AiQueryController` - Endpoints de query inteligente
+
+**Local:** `backend/EcommerceProducts/Controllers/`
+
+---
+
+## 🔧 Estrutura do Backend
+
+### Camadas de Aplicação
+
+```
+┌─────────────────────────────────────────┐
+│         HTTP Layer (Controllers)         │
+│  ProductsController, AiQueryController  │
+└──────────────┬──────────────────────────┘
+               ↓
+┌──────────────────────────────────────────┐
+│      Business Logic Layer (Services)     │
+│  ProductService, NlToSqlService          │
+└──────────────┬──────────────────────────┘
+               ↓
+┌──────────────────────────────────────────┐
+│   Data Access Layer (Repositories)       │
+│          ProductRepository               │
+└──────────────┬──────────────────────────┘
+               ↓
+┌──────────────────────────────────────────┐
+│         ORM Layer (EF Core)              │
+│             AppDbContext                 │
+└──────────────┬──────────────────────────┘
+               ↓
+┌──────────────────────────────────────────┐
+│         Database Layer (MSSQL)           │
+│          SQL Server 2022                 │
+└──────────────────────────────────────────┘
+```
+
+### Estrutura de Diretórios
+
+```
+backend/EcommerceProducts/
+├── Controllers/                # Endpoints HTTP
+│   ├── ProductsController.cs   # CRUD de produtos
+│   └── AiQueryController.cs    # Queries com IA
+├── Models/                     # Entidades de domínio
+│   └── Product.cs              # Modelo de produto
+├── DTOs/                       # Objetos de transferência
+│   ├── ProductResponse.cs
+│   ├── CreateProductRequest.cs
+│   ├── UpdateProductRequest.cs
+│   ├── AiQueryRequest.cs
+│   ├── AiQueryResponse.cs
+│   ├── PagedRequest.cs
+│   └── PagedResponse.cs
+├── Services/                   # Lógica de negócio
+│   ├── IProductService.cs
+│   ├── ProductService.cs
+│   ├── INlToSqlService.cs      # NL2SQL com Gemini
+│   └── NlToSqlService.cs
+├── Repositories/               # Acesso a dados
+│   ├── IProductRepository.cs
+│   └── ProductRepository.cs
+├── Data/                       # Configuração de BD
+│   └── AppDbContext.cs         # EF Core DbContext
+├── Migrations/                 # Migrações EF Core
+│   ├── InitialCreate
+│   └── ChangeProductIdToGuid
+├── Validators/                 # Validações FluentValidation
+│   ├── CreateProductRequestValidator.cs
+│   ├── UpdateProductRequestValidator.cs
+│   └── AiQueryRequestValidator.cs
+├── Filters/                    # Middleware e filtros
+│   ├── GlobalExceptionMiddleware.cs
+│   └── ValidationFilter.cs
+├── Mappings/                   # Mapeamento de dados
+│   └── ProductMappings.cs
+├── Program.cs                  # Configuração da aplicação
+└── appsettings.json            # Arquivo de configuração
+```
+
+### Entidade Principal - Produto
+
+```csharp
+// Product.cs
+public class Product
+{
+    public Guid Id { get; set; }              // PK UUID
+    public string Name { get; set; }          // Nome do produto
+    public string? Description { get; set; }  // Descrição
+    public decimal Price { get; set; }        // Preço
+    public int StockQuantity { get; set; }    // Quantidade em estoque
+    public string? Category { get; set; }     // Categoria
+    public string? ImageUrl { get; set; }     // URL da imagem
+    public bool IsActive { get; set; }        // Status ativo/inativo
+    public DateTime CreatedAt { get; set; }   // Data de criação
+    public DateTime? UpdatedAt { get; set; }  // Data de atualização
+}
 ```
 
 ---
 
-## Local Development (Without Docker)
+## 🎨 Estrutura do Frontend
 
-### Backend Setup
+### Arquitetura Next.js
 
-```bash
-cd backend
-dotnet restore
-dotnet ef database update
-dotnet run
+```
+webapp/
+├── src/
+│   ├── app/                    # Next.js App Directory
+│   │   ├── layout.tsx          # Layout raiz
+│   │   ├── page.tsx            # Página principal
+│   │   └── [routes]/           # Rotas dinâmicas
+│   ├── components/             # Componentes React reutilizáveis
+│   │   ├── ProductList.tsx
+│   │   ├── ProductForm.tsx
+│   │   ├── SearchBar.tsx
+│   │   └── ...
+│   ├── services/               # Camada de serviços
+│   │   └── api.ts              # Cliente HTTP e chamadas API
+│   └── types/                  # Interfaces TypeScript
+│       ├── product.ts
+│       └── ...
+├── public/                     # Arquivos estáticos
+├── Dockerfile                  # Build da aplicação
+├── package.json                # Dependências npm
+├── tsconfig.json               # Configuração TypeScript
+├── tailwind.config.ts          # Configuração Tailwind CSS
+└── next.config.mjs             # Configuração Next.js
 ```
 
-API: http://localhost:5079
+### Fluxo de Dados Frontend
 
-### Frontend Setup
-
-```bash
-cd webapp
-npm install
-npm run dev
 ```
-
-Frontend: http://localhost:3000
+User Interface (React Components)
+    ↓
+Event Handlers (onClick, onChange, etc)
+    ↓
+API Service Client (api.ts)
+    ↓
+HTTP Requests (Fetch/Axios)
+    ↓
+Backend API (localhost:5079)
+    ↓
+Response → State Management
+    ↓
+Re-render Components
+```
 
 ---
 
-## API Endpoints
+## 🔗 Integrações
 
-Base URL: `http://localhost:5079/api/products`
+### 1. Integração com Google Gemini (IA)
 
-### Get All Products
+**Objetivo:** Processar queries em linguagem natural e converter para SQL.
+
+**Fluxo:**
 
 ```
-GET /api/products
+User Query (linguagem natural)
+    ↓
+[Frontend] AiQueryController.PostQuery()
+    ↓
+[Service] NlToSqlService.ProcessQueryAsync()
+    ↓
+[API] Google Gemini API 2.5-flash
+    ↓
+Generated SQL Query
+    ↓
+ProductRepository.GetAllAsync(filter)
+    ↓
+Results → AiQueryResponse
+    ↓
+Frontend renderiza resultados
 ```
 
-**Query Parameters:**
-
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `page` | int | No | Page number (default: 1) |
-| `pageSize` | int | No | Items per page (default: 12) |
-| `category` | string | No | Filter by category |
-| `isActive` | bool | No | Filter by active status |
-
-**Response:** `200 OK`
+**Configuração:**
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Laptop",
-    "description": "High-performance laptop",
-    "price": 1299.99,
-    "stockQuantity": 50,
-    "category": "Electronics",
-    "imageUrl": "https://example.com/laptop.jpg",
-    "isActive": true,
-    "createdAt": "2026-02-15T18:00:00Z",
-    "updatedAt": null
+{
+  "Gemini": {
+    "ApiKey": "<sua-chave-api>",
+    "Model": "gemini-2.5-flash"
   }
-]
-```
-
----
-
-### Get Product by ID
-
-```
-GET /api/products/{id}
-```
-
-**Response:** `200 OK` or `404 Not Found`
-
-```json
-{
-  "id": 1,
-  "name": "Laptop",
-  "description": "High-performance laptop",
-  "price": 1299.99,
-  "stockQuantity": 50,
-  "category": "Electronics",
-  "imageUrl": "https://example.com/laptop.jpg",
-  "isActive": true,
-  "createdAt": "2026-02-15T18:00:00Z",
-  "updatedAt": null
 }
 ```
 
----
+**Local:** `backend/EcommerceProducts/Services/NlToSqlService.cs`
 
-### Create Product
+### 2. Integração com SQL Server (Banco de Dados)
 
-```
-POST /api/products
-```
+**Objetivo:** Persistência de dados de produtos.
 
-**Request Body:**
+**Configuração (appsettings.json):**
 
 ```json
 {
-  "name": "Laptop",
-  "description": "High-performance laptop",
-  "price": 1299.99,
-  "stockQuantity": 50,
-  "category": "Electronics",
-  "imageUrl": "https://example.com/laptop.jpg"
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=db;Database=EcommerceDB;User=sa;Password=..."
+  }
 }
 ```
 
-**Validation Rules:**
+**Migrações EF Core:**
 
-| Field | Rules |
-|---|---|
-| `name` | Required, 1-200 characters |
-| `description` | Optional, max 1000 characters |
-| `price` | Required, must be > 0 |
-| `stockQuantity` | Required, must be >= 0 |
-| `category` | Optional, max 100 characters |
-| `imageUrl` | Optional, max 500 characters |
+- `20260215174615_InitialCreate` - Criação inicial de tabelas
+- `20260215184313_ChangeProductIdToGuid` - Alteração do tipo de ID
 
-**Response:** `201 Created` with the created product in the body and `Location` header.
+**Local:** `backend/EcommerceProducts/Migrations/`
+
+### 3. Integração Frontend ↔ Backend
+
+**Protocolo:** HTTP/REST
+
+**Endpoints Principais:**
+
+```
+GET    /api/products                    # Listar produtos (com paginação)
+GET    /api/products/{id}               # Obter detalhes de um produto
+POST   /api/products                    # Criar novo produto
+PUT    /api/products/{id}               # Atualizar produto
+DELETE /api/products/{id}               # Deletar produto
+POST   /api/aiqueries                   # Processar query com IA
+```
+
+**CORS (Cross-Origin Resource Sharing):**
+
+```csharp
+// Program.cs
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+```
 
 ---
 
-### Update Product
+## 📡 Fluxo de Dados
+
+### Fluxo 1: CRUD de Produtos
 
 ```
-PUT /api/products/{id}
+┌─────────────────────────────────────────────────────────┐
+│                      Frontend (Next.js)                  │
+│              User clica em "Criar Produto"               │
+└────────────────┬────────────────────────────────────────┘
+                 │ POST /api/products
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                 ProductsController                       │
+│            [HttpPost] CreateProduct()                    │
+└────────────────┬────────────────────────────────────────┘
+                 │ CreateProductRequest
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│               Validação (ValidationFilter)              │
+│         CreateProductRequestValidator                   │
+└────────────────┬────────────────────────────────────────┘
+                 │ ✓ Dados válidos
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                 ProductService                          │
+│              CreateAsync(request)                       │
+└────────────────┬────────────────────────────────────────┘
+                 │ Mapear DTO → Model
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│              ProductRepository                          │
+│         AddAsync(product) + SaveChanges()               │
+└────────────────┬────────────────────────────────────────┘
+                 │ INSERT INTO Products
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│            SQL Server Database                          │
+│           Produto persistido com novo ID                │
+└────────────────┬────────────────────────────────────────┘
+                 │ ProductResponse (201 Created)
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                      Frontend                           │
+│            Exibe mensagem de sucesso                    │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**Request Body:**
+### Fluxo 2: Query com IA
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                      Frontend                           │
+│         User digita query: "Produtos baratos"           │
+└────────────────┬────────────────────────────────────────┘
+                 │ POST /api/aiqueries
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                 AiQueryController                       │
+│               PostQuery(request)                        │
+└────────────────┬────────────────────────────────────────┘
+                 │ AiQueryRequest {"query": "..."}
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│              Validação (ValidationFilter)              │
+│          AiQueryRequestValidator                       │
+└────────────────┬────────────────────────────────────────┘
+                 │ ✓ Query válida
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                NlToSqlService                           │
+│       ProcessQueryAsync(query)                          │
+└────────────────┬────────────────────────────────────────┘
+                 │ "Produtos baratos"
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│          Google Gemini API 2.5-flash                   │
+│    Converte linguagem natural para SQL                 │
+│  "SELECT * FROM Product WHERE Price < 100"            │
+└────────────────┬────────────────────────────────────────┘
+                 │ SQL filtro
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│              ProductRepository                          │
+│    GetAllAsync(filter: p => p.Price < 100)            │
+└────────────────┬────────────────────────────────────────┘
+                 │ SELECT * FROM Products WHERE Price < 100
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│           SQL Server Database                           │
+│  Retorna produtos que atendem os critérios             │
+└────────────────┬────────────────────────────────────────┘
+                 │ Produtos
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│           NlToSqlService                                │
+│      Mapeia para AiQueryResponse                        │
+└────────────────┬────────────────────────────────────────┘
+                 │ Resposta formatada
+                 ↓
+┌─────────────────────────────────────────────────────────┐
+│                      Frontend                           │
+│         Exibe lista de produtos encontrados            │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Configuração e Ambiente
+
+### Variáveis de Ambiente
+
+**Backend (appsettings.json / Variáveis de Environment):**
 
 ```json
 {
-  "name": "Laptop Pro",
-  "description": "Updated high-performance laptop",
-  "price": 1499.99,
-  "stockQuantity": 45,
-  "category": "Electronics",
-  "imageUrl": "https://example.com/laptop-pro.jpg",
-  "isActive": true
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=db;Database=EcommerceDB;User=sa;Password=YourPassword123!"
+  },
+  "Gemini": {
+    "ApiKey": "sua-chave-gemini-api",
+    "Model": "gemini-2.5-flash"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information"
+    }
+  }
 }
 ```
 
-**Response:** `200 OK` or `404 Not Found`
-
----
-
-### Delete Product
-
-```
-DELETE /api/products/{id}
-```
-
-**Response:** `204 No Content` or `404 Not Found`
-
----
-
-## Database Schema
-
-### Products Table
-
-| Column | Type | Constraints |
-|---|---|---|
-| `Id` | `int` | Primary Key, Identity |
-| `Name` | `nvarchar(200)` | Not Null, Indexed |
-| `Description` | `nvarchar(1000)` | Nullable |
-| `Price` | `decimal(18,2)` | Not Null |
-| `StockQuantity` | `int` | Not Null |
-| `Category` | `nvarchar(100)` | Nullable, Indexed |
-| `ImageUrl` | `nvarchar(500)` | Nullable |
-| `IsActive` | `bit` | Not Null, Default: `true` |
-| `CreatedAt` | `datetime2` | Not Null |
-| `UpdatedAt` | `datetime2` | Nullable |
-
----
-
-## Environment Configuration
-
-The project automatically creates `.env` files from `.env.example` templates when you run it for the first time.
-
-### Automatic Setup
-
-**All startup methods handle this automatically:**
+**Frontend (.env.local):**
 
 ```bash
-# Windows
-project.bat start-bg
-
-# Linux/Mac
-./project.sh start-bg
-
-# Docker
-docker compose up
-```
-
-### Environment Files
-
-| File | Purpose | Auto-created |
-|------|---------|--------------|
-| `backend/.env` | Backend configuration | ✓ Yes |
-| `webapp/.env` | Frontend configuration | ✓ Yes |
-
-### Default Values
-
-**Backend** (`backend/.env`):
-```
-ASPNETCORE_ENVIRONMENT=Production
-ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=EcommerceProductsDb;...
-Gemini__ApiKey=YOUR_GEMINI_API_KEY_HERE
-Gemini__Model=gemini-2.5-flash
-```
-
-**Frontend** (`webapp/.env`):
-```
 NEXT_PUBLIC_API_URL=http://localhost:5079
 ```
 
-### Customization
+### Docker Compose Setup
 
-1. Let the project create `.env` files automatically
-2. Edit the `.env` files (not `.env.example`)
-3. Restart services: `docker compose restart`
+**Arquivo:** `docker-compose.yml`
 
-> 💡 **Never commit `.env` files to Git** - they contain sensitive data
+```yaml
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      SA_PASSWORD: YourPassword123!
+    ports:
+      - "1433:1433"
 
----
+  backend:
+    build: ./backend
+    depends_on:
+      - db
+    ports:
+      - "5079:8080"
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db;..."
 
-### Docker Commands
+  webapp:
+    build: ./webapp
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:5079
+```
+
+### Iniciar Aplicação
 
 ```bash
-# Start all services
+# Começar todos os serviços
 docker compose up
 
-# Start services in background
-docker compose up -d
-
-# Stop all services
-docker compose down
-
-# Stop services and remove data volumes
-docker compose down -v
-
-# View logs
-docker compose logs -f
-
-# View specific service logs
-docker compose logs -f backend
-
-# Execute command in backend container
+# Aplicar migrações de BD
 docker compose exec backend dotnet ef database update
 
-# Rebuild images
-docker compose build --no-cache
-```
-
-### Backend Commands (Local Development)
-
-From the `backend` directory:
-
-```bash
-# Restore dependencies
-dotnet restore
-
-# Build project
-dotnet build
-
-# Run application
-dotnet run
-
-# Create a new migration
-dotnet ef migrations add <MigrationName>
-
-# Apply migrations
-dotnet ef database update
-
-# Remove last migration
-dotnet ef migrations remove
-```
-
-### Frontend Commands (Local Development)
-
-From the `webapp` directory:
-
-```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+# Acessar aplicação
+# Frontend: http://localhost:3000
+# Backend: http://localhost:5079
+# Swagger: http://localhost:5079/swagger
 ```
 
 ---
 
-## Environment Configuration
+## 📊 Resumo de Padrões e Decisões Arquiteturais
 
-### Backend (.NET)
-
-The backend uses environment variables for configuration. In Docker, these are set in `docker-compose.yml`:
-
-- `ConnectionStrings__DefaultConnection` - SQL Server connection string
-- `Gemini__ApiKey` - Google Gemini API key
-- `Gemini__Model` - Gemini model name (default: gemini-2.5-flash)
-
-### Frontend (Next.js)
-
-The frontend uses environment variables prefixed with `NEXT_PUBLIC_` (visible to browser):
-
-- `NEXT_PUBLIC_API_URL` - Backend API URL (default: http://localhost:5079)
-
----
-
-## Database
-
-**SQL Server 2022 Developer Edition**
-
-| Setting | Value |
-|---|---|
-| Server | `localhost,1433` (local) or `sqlserver,1433` (Docker) |
-| Database | `EcommerceProductsDb` |
-| Username | `sa` |
-| Password | `SqlServer@2024!` |
-
-### Connection Strings
-
-**Docker (from docker-compose.yml):**
-```
-Server=sqlserver,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
-```
-
-**Local Development:**
-```
-Server=localhost,1433;Database=EcommerceProductsDb;User Id=sa;Password=SqlServer@2024!;TrustServerCertificate=True
-```
+| Aspecto | Padrão/Tecnologia | Justificativa |
+|--------|------------------|---------------|
+| **Arquitetura Geral** | Layered (3-camadas) | Separação de responsabilidades, facilitando manutenção |
+| **Acesso de Dados** | Repository + UnitOfWork (DbContext) | Abstração de dados, testabilidade |
+| **Lógica de Negócio** | Service Layer | Reutilização de código, lógica centralizada |
+| **Validação** | FluentValidation com Middleware | Validações declarativas e reutilizáveis |
+| **Tratamento de Erros** | GlobalExceptionMiddleware | Respostas de erro consistentes |
+| **Comunicação HTTP** | REST com DTOs | Padrão de facto para APIs web |
+| **AI Integration** | Google Gemini 2.5-flash | State-of-the-art em processamento de linguagem natural |
+| **Frontend Framework** | Next.js + React | Produtividade, SSR, otimições automáticas |
+| **Estilo CSS** | Tailwind CSS | Desenvolvimento rápido com utility-first CSS |
+| **Containerização** | Docker Compose | Ambiente consistente entre desenvolvimento e produção |
+| **Banco de Dados** | SQL Server | Integração nativa com .NET, escalabilidade |
 
 ---
 
-## Troubleshooting
+## 🎓 Conclusão
 
-### Port Already in Use
+A arquitetura do **EcommerceProducts** segue as melhores práticas de desenvolvimento de software moderno, combinando:
 
-If a port is already bound:
-
-```bash
-# Free up port 3000 (frontend)
-lsof -ti:3000 | xargs kill -9
-
-# Free up port 5079 (backend)
-lsof -ti:5079 | xargs kill -9
-
-# Free up port 1433 (database)
-lsof -ti:1433 | xargs kill -9
-```
-
-### Database Connection Issues
-
-```bash
-# Check if SQL Server container is healthy
-docker compose ps
-
-# Reset database
-docker compose down -v
-docker compose up -d
-docker compose exec backend dotnet ef database update
-```
-
-### Building Issues
-
-```bash
-# Clear Docker cache and rebuild
-docker compose down
-docker compose build --no-cache
-docker compose up
-```
-
----
-
-## License
-
-This project is licensed under the MIT License.
+1. **Padrões de Projeto Estabelecidos** - Repository, Service, DTO, Middleware
+2. **Separação Clara de Responsabilidades** - Cada camada tem um propósito definido
+3. **Tecnologias Modernas** - ASP.NET Core 8, Next.js 14, SQL Server, Google Gemini
+4. **Escalabilidade** - Arquitetura preparada para crescimento
+5. **Manutenibilidade** - Código organizado e fácil de entender
+6. **DevOps Moderno** - Containerização completa com Docker Compose
